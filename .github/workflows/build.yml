@@ -39,7 +39,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.PAT }}
-          repository: username/my-repo
+          repository: Ashu-Bashir / Node-App-main
           event-type: my-event
           client-payload: |
             {
