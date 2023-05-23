@@ -1,0 +1,61 @@
+name: ActionsTest
+
+on:
+  pull_request:
+    branches:
+      - github-actions
+    types: [opened, synchronize, reopened, labeled]
+  label:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Mode for the build'
+        required: true
+        default: 'dev-ts'
+      version:
+        description: 'Version for the build'
+        required: true
+        default: '1.0.0'
+      brand:
+        description: 'Brand for the build'
+        required: true
+        default: 'anywhere.app'
+
+jobs:
+  trigger:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract GitHub Inputs
+        id: extract-inputs
+        run: |
+          echo "::set-output name=mode::${{ github.event.pull_request.head.ref }}"
+          echo "::set-output name=version::${{ github.event.inputs.version }}"
+          echo "::set-output name=brand::${{ github.event.inputs.brand }}"
+
+      - name: Trigger Manual Workflow
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.PAT }}
+          repository: username/my-repo
+          event-type: my-event
+          client-payload: |
+            {
+              "mode": "${{ steps.extract-inputs.outputs.mode }}",
+              "version": "${{ steps.extract-inputs.outputs.version }}",
+              "brand": "${{ steps.extract-inputs.outputs.brand }}"
+            }
+
+  live:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'macos-latest') || contains(github.event.pull_request.labels.*.name, 'windows-latest') }}
+    runs-on: ${{ (github.event.pull_request.labels.*.name) }}
+    
+    steps:
+        - name: Enter Input Values.
+          run: |
+           echo "Mode: ${{ github.event.inputs.mode }}"
+           echo "Version: ${{ github.event.inputs.version }}"
+           echo "Brand: ${{ github.event.inputs.brand }}"
+
